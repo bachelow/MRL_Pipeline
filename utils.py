@@ -8,7 +8,6 @@
 
 import httpx
 import pandas as pd
-import pypdf
 from pathlib import Path
 import base64
 import fitz  # PyMuPDF
@@ -25,7 +24,6 @@ PARAMS_PEST = {"format": "json", "api-version": "v2.0"}
 BASE_DIR = Path(__file__).resolve().parent  # Directory of the current script
 EXAMPLES_PATH = BASE_DIR / "examples" 
 JSON_PATH = BASE_DIR / "json_outputs" 
-OPENAI_API_KEY = "your_openai_api_key_here"  # Replace with your actual OpenAI API key
 
 ##################   Functions   ####################################
 
@@ -65,7 +63,7 @@ def get_substance_mrl_EU(product_id : str, substance_id : str):
     
     """
 
-    params = PARAMS | {"product_id":product_id, "pesticide_residue_id":substance_id}
+    params = PARAMS_PEST | {"pesticide_residue_id":substance_id, "product_id":product_id}
     with httpx.Client(timeout=30.0) as client:
         resp = client.get(BASE_URL_MRL, headers=HEADERS, params=params)
         resp.raise_for_status()
@@ -90,7 +88,6 @@ def create_and_dump_data():
     df_pest.to_csv("eu_pesticides.csv", index=False, sep="|")
 
 
-
 def pdf_to_base64_images(pdf_path: str) -> list[str]:
     """
     Convert each page of a PDF into a base64-encoded PNG image.
@@ -113,43 +110,55 @@ def pdf_to_base64_images(pdf_path: str) -> list[str]:
     return images
 
 
-def fetch_mrl_data(product_name: str, substance_name: str) -> dict:
+def fetch_mrl_data(product_name: str, sub_name: str, mrl: int) -> dict:
     """
     Fetch MRL data for a given product and substance from the EU database.
-    Returns a dictionary with product and substance details along with MRL information.
+    Returns the compliance status regarding the mrl value provided.
     """
     
     # Load product and pesticide data
     df_prod = pd.read_csv("eu_products.csv", sep="|")
     df_pest = pd.read_csv("eu_pesticides.csv", sep="|")
     
-    # Find product
-    prod_row = df_prod[df_prod["product_name"].str.lower() == product_name.lower()]
+    # Find product ID
+    condition_product = (df_prod.product_name.str.contains(product_name, case=False, na=False))
+    prod_row = df_prod[condition_product]
     if prod_row.empty:
         return {"error": f"Product '{product_name}' not found in EU database."}
+    product_id = str(prod_row.iloc[0]["product_id"])
     
-    product_id = prod_row.iloc[0]["product_id"]
-    
-    # Find substance
-    pest_row = df_pest[df_pest["active_substance_name"].str.lower() == substance_name.lower()]
+    # Find substance ID 
+    condition_pest = (df_pest.substance_name.str.contains(sub_name, case=False, na=False))
+    pest_row = df_pest[condition_pest]
     if pest_row.empty:
-        return {"error": f"Substance '{substance_name}' not found in EU database."}
-    
-    substance_id = pest_row.iloc[0]["pesticide_residue_id"]
+        return {"error": f"Substance '{sub_name}' not found in EU database."}
+    substance_id = str(pest_row.iloc[0]["substance_id"])
     
     # Fetch MRL data
     mrl_data = get_substance_mrl_EU(product_id, substance_id)
     
     if not mrl_data:
-        return {"error": f"No MRL data found for product '{product_name}' and substance '{substance_name}'."}
-    
-    return {
-        "Product": prod_row.iloc[0]["product_name"],
-        "Product_EU": prod_row.iloc[0]["product_name_en"],
-        "Substance": pest_row.iloc[0]["active_substance_name"],
-        "Substance_EU": pest_row.iloc[0]["active_substance_name_en"],
-        "MRL_Data": mrl_data
-    }
+        print(f"Error : No MRL data found for product '{product_name}' and substance '{sub_name}'.")
+    else:
+        
+        print(f"MRL data found for product '{product_name}' and substance '{sub_name}'.")
+        mrl_options = mrl_data[0].get("mrl_value", [])
+        try: 
+            mrl_options_value = float(mrl_options.replace("*", "")) if mrl_options != "No MRL required" else 0
+        except ValueError:
+            print(f"Warning: Unable to convert MRL option '{mrl_options}' to float. Setting to infinity.")
+            mrl_options_value = 0
+        
+        print(f"MRL options from EU database: {mrl_options}")
+        print(f"MRL value from report: {mrl}")
+        mrl_conditions = (mrl_options == "No MRL required") | (float(mrl) < mrl_options_value) 
+        compliance_results = "CONFORME" if mrl_conditions  else "NON CONFORME"    
+        
+        # Check compliance (Final Report)
+        print("\n" + "="*50)
+        print(f"COMPLIANCE RESULT:")
+        print("="*50)
+        print(compliance_results)
 
 
 ##################   Prompt for OpenAI Model   ##########################
