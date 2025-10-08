@@ -146,7 +146,7 @@ def fetch_mrl_data(product_name: str, sub_name: str, mrl: int) -> dict:
         try: 
             mrl_options_value = float(mrl_options.replace("*", "")) if mrl_options != "No MRL required" else 0
         except ValueError:
-            print(f"Warning: Unable to convert MRL option '{mrl_options}' to float. Setting to infinity.")
+            print(f"Warning: Unable to convert MRL option '{mrl_options}' to float. Setting to 0.")
             mrl_options_value = 0
         
         print(f"MRL options from EU database: {mrl_options}")

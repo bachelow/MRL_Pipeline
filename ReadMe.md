@@ -51,7 +51,7 @@ OPENAI_API_KEY = "sk- ..."
 jupyter notebook
 ```
 
-## 3. HYPOTHÈSES DE TRAVAILS
+## 3. HYPOTHÈSES DE TRAVAIL
 
 Les contraintes de temps pour développer ce pipeline nous a conduit à faire certaines hypothèses ainsi que certains choix de structures :
 - La structure en deux dossiers examples & json_outputs est adaptée pour peu d'exemples. Dans des cas avec plus de documents un dossier par analyse sera plus adapté
