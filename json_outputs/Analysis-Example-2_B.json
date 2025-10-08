@@ -1,0 +1,11 @@
+{
+  "Product": "piñas - fruta",
+  "Product_EU": "pineapples - fruit",
+  "Substances": [
+    {
+      "Name": "etefon",
+      "Name_EU": "ethephon",
+      "MRL": "2 mg/kg"
+    }
+  ]
+}

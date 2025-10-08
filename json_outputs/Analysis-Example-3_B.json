@@ -1,0 +1,16 @@
+{
+  "Product": "Ananas",
+  "Product_EU": "Pineapple",
+  "Substances": [
+    {
+      "Name": "Ethephon",
+      "Name_EU": "Ethephon",
+      "MRL": "2"
+    },
+    {
+      "Name": "Fludioxonil",
+      "Name_EU": "Fludioxonil",
+      "MRL": "7"
+    }
+  ]
+}

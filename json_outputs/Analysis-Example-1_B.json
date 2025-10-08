@@ -1,0 +1,11 @@
+{
+  "Product": "Mango",
+  "Product_EU": "Mango",
+  "Substances": [
+    {
+      "Name": "Azoxystrobine",
+      "Name_EU": "Azoxystrobin",
+      "MRL": "4.0"
+    }
+  ]
+}
